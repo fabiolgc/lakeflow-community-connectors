@@ -53,17 +53,17 @@ class LakeflowConnect:
         return [
             "tickets",
             "problems",
-            "changes",
+            ##"changes",
             "releases",
-            "requesters",
-            "agents",
+            ##"requesters",
+            ##"agents",
             "locations",
             "products",
             "vendors",
             "assets",
             "purchase_orders",
             "software",
-            "satisfaction_survey_responses",
+            ## "satisfaction_survey_responses",
             "requested_items",
         ]
 
