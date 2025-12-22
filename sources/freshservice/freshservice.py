@@ -121,8 +121,8 @@ class LakeflowConnect:
                     StructField("item_category", StringType(), True),
                     StructField("tags", ArrayType(StringType(), True), True),
                     StructField(
-                        "custom_fields", StructType([]), True
-                    ),  # Dynamic fields
+                        "custom_fields", StringType(), True
+                    ),  # Dynamic fields stored as JSON string
                     StructField("attachments", ArrayType(StringType(), True), True),
                     StructField("nr_due_by", StringType(), True),
                     StructField("nr_escalated", BooleanType(), True),
@@ -155,15 +155,15 @@ class LakeflowConnect:
                     StructField("category", StringType(), True),
                     StructField("sub_category", StringType(), True),
                     StructField("item_category", StringType(), True),
-                    StructField("custom_fields", StructType([]), True),
+                    StructField("custom_fields", StringType(), True),
                     StructField("tags", ArrayType(StringType(), True), True),
                     StructField(
                         "analysis_fields",
                         StructType(
                             [
-                                StructField("problem_cause", StructType([]), True),
-                                StructField("problem_symptom", StructType([]), True),
-                                StructField("problem_impact", StructType([]), True),
+                                StructField("problem_cause", StringType(), True),
+                                StructField("problem_symptom", StringType(), True),
+                                StructField("problem_impact", StringType(), True),
                             ]
                         ),
                         True,
@@ -197,14 +197,14 @@ class LakeflowConnect:
                     StructField("category", StringType(), True),
                     StructField("sub_category", StringType(), True),
                     StructField("item_category", StringType(), True),
-                    StructField("custom_fields", StructType([]), True),
+                    StructField("custom_fields", StringType(), True),
                     StructField(
                         "planning_fields",
                         StructType(
                             [
-                                StructField("maintenance_window", StructType([]), True),
-                                StructField("rollout_plan", StructType([]), True),
-                                StructField("backout_plan", StructType([]), True),
+                                StructField("maintenance_window", StringType(), True),
+                                StructField("rollout_plan", StringType(), True),
+                                StructField("backout_plan", StringType(), True),
                             ]
                         ),
                         True,
@@ -237,13 +237,13 @@ class LakeflowConnect:
                     StructField("category", StringType(), True),
                     StructField("sub_category", StringType(), True),
                     StructField("item_category", StringType(), True),
-                    StructField("custom_fields", StructType([]), True),
+                    StructField("custom_fields", StringType(), True),
                     StructField(
                         "planning_fields",
                         StructType(
                             [
-                                StructField("release_notes", StructType([]), True),
-                                StructField("deployment_plan", StructType([]), True),
+                                StructField("release_notes", StringType(), True),
+                                StructField("deployment_plan", StringType(), True),
                             ]
                         ),
                         True,
@@ -282,7 +282,7 @@ class LakeflowConnect:
                     StructField("language", StringType(), True),
                     StructField("location_id", LongType(), True),
                     StructField("background_information", StringType(), True),
-                    StructField("custom_fields", StructType([]), True),
+                    StructField("custom_fields", StringType(), True),
                     StructField("is_agent", BooleanType(), True),
                     StructField("has_logged_in", BooleanType(), True),
                     StructField("active", BooleanType(), True),
@@ -319,9 +319,9 @@ class LakeflowConnect:
                     StructField("scoreboard_level_id", LongType(), True),
                     StructField("member_of", ArrayType(LongType(), True), True),
                     StructField("observer_of", ArrayType(LongType(), True), True),
-                    StructField("roles", ArrayType(StructType([]), True), True),
+                    StructField("roles", StringType(), True),
                     StructField("signature", StringType(), True),
-                    StructField("custom_fields", StructType([]), True),
+                    StructField("custom_fields", StringType(), True),
                     StructField("active", BooleanType(), True),
                     StructField("has_logged_in", BooleanType(), True),
                     StructField("workspace_id", LongType(), True),
@@ -402,7 +402,7 @@ class LakeflowConnect:
                     StructField("author_type", StringType(), True),
                     StructField("end_of_life", StringType(), True),
                     StructField("discovery_enabled", BooleanType(), True),
-                    StructField("type_fields", StructType([]), True),
+                    StructField("type_fields", StringType(), True),
                 ]
             )
 
@@ -428,8 +428,8 @@ class LakeflowConnect:
                     StructField("discount_percentage", DecimalType(10, 2), True),
                     StructField("tax_percentage", DecimalType(10, 2), True),
                     StructField("shipping_cost", DecimalType(10, 2), True),
-                    StructField("custom_fields", StructType([]), True),
-                    StructField("purchase_items", ArrayType(StructType([]), True), True),
+                    StructField("custom_fields", StringType(), True),
+                    StructField("purchase_items", StringType(), True),
                 ]
             )
 
@@ -460,7 +460,7 @@ class LakeflowConnect:
                     StructField("updated_at", StringType(), True),
                     StructField("ticket_id", LongType(), True),
                     StructField("user_id", LongType(), True),
-                    StructField("ratings", StructType([]), True),
+                    StructField("ratings", StringType(), True),
                     StructField("feedback", StringType(), True),
                     StructField("survey_type", StringType(), True),
                 ]
@@ -481,7 +481,7 @@ class LakeflowConnect:
                     StructField("remarks", StringType(), True),
                     StructField("delivery_time", StringType(), True),
                     StructField("is_parent", BooleanType(), True),
-                    StructField("custom_fields", StructType([]), True),
+                    StructField("custom_fields", StringType(), True),
                     StructField("fulfilled_at", StringType(), True),
                     StructField("cancelled_at", StringType(), True),
                     StructField("fulfillment_notes", StringType(), True),
