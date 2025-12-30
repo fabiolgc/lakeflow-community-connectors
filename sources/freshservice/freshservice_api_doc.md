@@ -32,26 +32,38 @@ The Freshservice API provides access to the following objects. The object list i
 
 1. **Tickets** - Support tickets and service requests (Incremental)
 2. **Problems** - Problem records for root cause analysis (Incremental)
-3. **Releases** - Release management records (Incremental)
-4. **Locations** - Physical or virtual locations (Snapshot)
-5. **Products** - Product catalog items (Snapshot)
-6. **Vendors** - Vendor information (Snapshot)
-7. **Assets** - Hardware and software assets (Snapshot)
-8. **PurchaseOrders** - Purchase orders for assets (Snapshot)
-9. **Software** - Software application records (Snapshot)
-10. **Requested Items** - Service catalog requested items (Snapshot)
+3. **Changes** - Change management records (Incremental)
+4. **Releases** - Release management records (Incremental)
+5. **Agents** - Support agents and their information (Snapshot)
+6. **Requesters** - End users and requesters (Snapshot)
+7. **Locations** - Physical or virtual locations (Snapshot)
+8. **Products** - Product catalog items (Snapshot)
+9. **Vendors** - Vendor information (Snapshot)
+10. **Assets** - Hardware and software assets (Snapshot)
+11. **AssetTypes** - Asset type definitions and configurations (Snapshot)
+12. **PurchaseOrders** - Purchase orders for assets (Snapshot)
+13. **Software** - Software application records (Snapshot)
+14. **ServiceCatalog** - Service catalog items available for requests (Snapshot)
+15. **Requested Items** - Service catalog requested items (Snapshot)
+16. **Conversations** - Ticket conversations, notes, and replies (Snapshot, nested under tickets)
 
 **API Endpoints:**
 - Tickets: `/api/v2/tickets`
 - Problems: `/api/v2/problems`
+- Changes: `/api/v2/changes`
 - Releases: `/api/v2/releases`
+- Agents: `/api/v2/agents`
+- Requesters: `/api/v2/requesters`
 - Locations: `/api/v2/locations`
 - Products: `/api/v2/products`
 - Vendors: `/api/v2/vendors`
 - Assets: `/api/v2/assets`
+- Asset Types: `/api/v2/asset_types`
 - Purchase Orders: `/api/v2/purchase_orders`
 - Software: `/api/v2/applications`
+- Service Catalog: `/api/v2/service_catalog/items`
 - Requested Items: Nested under service requests - `/api/v2/tickets/{ticket_id}/requested_items`
+- Conversations: Nested under tickets - `/api/v2/tickets/{ticket_id}/conversations`
 
 ## **Object Schema**
 
@@ -330,6 +342,158 @@ The Freshservice API does not provide a dynamic schema discovery endpoint. Schem
 }
 ```
 
+### **Changes Schema**
+
+```json
+{
+  "id": 123,
+  "created_at": "2024-01-01T10:00:00Z",
+  "updated_at": "2024-01-02T15:30:00Z",
+  "agent_id": 789,
+  "description": "Upgrade production database",
+  "description_text": "Plain text description",
+  "requester_id": 456,
+  "subject": "Database upgrade to v14",
+  "group_id": 202,
+  "priority": 2,
+  "impact": 2,
+  "status": 1,
+  "risk": 2,
+  "change_type": 1,
+  "approval_status": 1,
+  "planned_start_date": "2024-02-01T08:00:00Z",
+  "planned_end_date": "2024-02-01T18:00:00Z",
+  "department_id": 101,
+  "category": "Software",
+  "sub_category": "Database",
+  "item_category": "Infrastructure",
+  "custom_fields": {},
+  "planning_fields": {
+    "maintenance_window": {},
+    "rollout_plan": {},
+    "backout_plan": {}
+  },
+  "tags": [],
+  "assets": [],
+  "workspace_id": 1
+}
+```
+
+### **Agents Schema**
+
+```json
+{
+  "id": 789,
+  "created_at": "2024-01-01T10:00:00Z",
+  "updated_at": "2024-01-02T15:30:00Z",
+  "first_name": "Jane",
+  "last_name": "Smith",
+  "occasional": false,
+  "job_title": "IT Support Engineer",
+  "email": "jane.smith@example.com",
+  "work_phone_number": "+1-555-1234",
+  "mobile_phone_number": "+1-555-5678",
+  "department_ids": [101, 102],
+  "can_see_all_tickets_from_associated_departments": true,
+  "reporting_manager_id": 750,
+  "address": "123 Office St, San Francisco, CA",
+  "time_zone": "Pacific Time (US & Canada)",
+  "time_format": "12h",
+  "language": "en",
+  "location_id": 301,
+  "background_information": "5 years IT support experience",
+  "scoreboard_level_id": 3,
+  "member_of": [202, 203],
+  "observer_of": [204],
+  "roles": {
+    "role_ids": [1, 2]
+  },
+  "signature": "<p>Best regards,<br>Jane Smith</p>",
+  "custom_fields": {},
+  "active": true,
+  "has_logged_in": true,
+  "workspace_id": 1
+}
+```
+
+### **Requesters Schema**
+
+```json
+{
+  "id": 456,
+  "created_at": "2024-01-01T10:00:00Z",
+  "updated_at": "2024-01-02T15:30:00Z",
+  "first_name": "John",
+  "last_name": "Doe",
+  "job_title": "Software Engineer",
+  "primary_email": "john.doe@example.com",
+  "secondary_emails": ["john.d@example.com"],
+  "work_phone_number": "+1-555-9876",
+  "mobile_phone_number": "+1-555-5432",
+  "department_ids": [101],
+  "can_see_all_tickets_from_associated_departments": false,
+  "reporting_manager_id": 789,
+  "address": "456 Remote Way, Austin, TX",
+  "time_zone": "Central Time (US & Canada)",
+  "time_format": "24h",
+  "language": "en",
+  "location_id": 302,
+  "background_information": "Engineering team member",
+  "custom_fields": {},
+  "is_agent": false,
+  "has_logged_in": true,
+  "active": true,
+  "workspace_id": 1
+}
+```
+
+### **AssetTypes Schema**
+
+```json
+{
+  "id": 601,
+  "name": "Laptop",
+  "description": "Laptop computers",
+  "parent_asset_type_id": null,
+  "visible": true,
+  "created_at": "2024-01-01T10:00:00Z",
+  "updated_at": "2024-01-02T15:30:00Z"
+}
+```
+
+### **ServiceCatalog Schema**
+
+Service Catalog Items represent services available in the service catalog that users can request.
+
+```json
+{
+  "id": 201,
+  "created_at": "2024-01-01T10:00:00Z",
+  "updated_at": "2024-01-02T15:30:00Z",
+  "name": "New Laptop Request",
+  "delivery_time": 3,
+  "display_id": 201,
+  "category_id": 10,
+  "product_id": null,
+  "quantity": 1,
+  "deleted": false,
+  "icon_name": "laptop",
+  "group_visibility": 1,
+  "item_type": 1,
+  "ci_type_id": 601,
+  "product_provider": null,
+  "delivery_time_type": "days",
+  "botified": false,
+  "visibility": 1,
+  "allow_attachments": true,
+  "allow_quantity": true,
+  "is_bundle": false,
+  "create_child": false,
+  "description": "Request a new laptop for employees",
+  "short_description": "New laptop request"
+}
+```
+
 ### **Requested Items Schema**
 
 Requested Items are nested under service requests (tickets with type "Service Request"). They represent catalog items requested by users.
@@ -354,6 +518,30 @@ Requested Items are nested under service requests (tickets with type "Service Re
 }
 ```
 
+### **Conversations Schema**
+
+Conversations include notes, replies, and comments on tickets. They are nested under tickets.
+
+```json
+{
+  "id": 9001,
+  "created_at": "2024-01-01T12:00:00Z",
+  "updated_at": "2024-01-01T12:00:00Z",
+  "body": "<p>We are investigating this issue.</p>",
+  "body_text": "We are investigating this issue.",
+  "incoming": false,
+  "private": false,
+  "user_id": 789,
+  "support_email": "support@example.com",
+  "ticket_id": 123,
+  "to_emails": ["user@example.com"],
+  "from_email": "agent@example.com",
+  "cc_emails": [],
+  "bcc_emails": [],
+  "attachments": []
+}
+```
+
 ## **Get Object Primary Keys**
 
 Primary keys for Freshservice objects are **static** and defined as follows:
@@ -362,14 +550,20 @@ Primary keys for Freshservice objects are **static** and defined as follows:
 |--------|-------------------|
 | Tickets | `id` |
 | Problems | `id` |
+| Changes | `id` |
 | Releases | `id` |
+| Agents | `id` |
+| Requesters | `id` |
 | Locations | `id` |
 | Products | `id` |
 | Vendors | `id` |
 | Assets | `id` |
+| AssetTypes | `id` |
 | PurchaseOrders | `id` |
 | Software | `id` |
+| ServiceCatalog | `id` |
 | Requested Items | `id` |
+| Conversations | `id` |
 
 All objects use `id` as the unique identifier (integer/long type).
 
@@ -381,14 +575,20 @@ The ingestion type for each object determines how data should be synchronized:
 |--------|---------------|--------------|-------------|
 | Tickets | `cdc` | `updated_at` | Supports incremental sync with updates and deletes |
 | Problems | `cdc` | `updated_at` | Supports incremental sync with updates and deletes |
+| Changes | `cdc` | `updated_at` | Supports incremental sync with updates and deletes |
 | Releases | `cdc` | `updated_at` | Supports incremental sync with updates and deletes |
+| Agents | `snapshot` | N/A | Full snapshot only |
+| Requesters | `snapshot` | N/A | Full snapshot only |
 | Locations | `snapshot` | N/A | Full snapshot only |
 | Products | `snapshot` | N/A | Full snapshot only |
 | Vendors | `snapshot` | N/A | Full snapshot only |
 | Assets | `snapshot` | N/A | Full snapshot only |
+| AssetTypes | `snapshot` | N/A | Full snapshot only |
 | PurchaseOrders | `snapshot` | N/A | Full snapshot only |
 | Software | `snapshot` | N/A | Full snapshot only |
+| ServiceCatalog | `snapshot` | N/A | Full snapshot only |
 | Requested Items | `snapshot` | N/A | Full snapshot only |
+| Conversations | `snapshot` | N/A | Full snapshot only (nested under tickets) |
 
 **Notes:**
 - `cdc` (Change Data Capture): Supports incremental reads using `updated_at` timestamp, can track updates and soft deletes
@@ -412,7 +612,85 @@ https://{domain}.freshservice.com/api/v2/{resource}
 | `page` | integer | No | Page number for pagination (default: 1) |
 | `per_page` | integer | No | Number of records per page (default: 30, max: 100) |
 | `updated_since` | string (ISO 8601) | No | Filter records updated after this timestamp (for incremental objects) |
-| `include` | string | No | Include additional data (e.g., "requester", "stats") |
+| `include` | string | No | Comma-separated list of related entities to include (e.g., "requester,stats") |
+
+### **Include Parameter for Tickets**
+
+The `include` parameter allows you to retrieve additional related data when fetching tickets. This enhances the ticket data by including related entities in a single API call, reducing the need for multiple requests.
+
+**Supported Include Values:**
+
+| Include Value | Description | Fields Added |
+|--------------|-------------|--------------|
+| `stats` | Ticket statistics and timestamps | `closed_at`, `resolved_at`, `first_responded_at` |
+| `requester` | Requester information | `requester.email`, `requester.id`, `requester.mobile`, `requester.name`, `requester.phone` |
+| `requested_for` | User for whom ticket was requested | `requested_for` object with user details |
+| `onboarding_context` | Onboarding-related information | `onboarding_context` object |
+| `offboarding_context` | Offboarding-related information | `offboarding_context` object |
+
+**Usage Examples:**
+
+```bash
+# Include stats only
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/tickets?include=stats
+
+# Include multiple entities
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/tickets?include=stats,requester,requested_for
+
+# Include all supported entities
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/tickets?include=stats,requester,requested_for,onboarding_context,offboarding_context
+
+# Combine with other parameters
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/tickets?updated_since=2024-01-01T00:00:00Z&include=stats,requester&per_page=100
+```
+
+**Example Response with Include:**
+
+```json
+{
+  "tickets": [
+    {
+      "id": 123,
+      "subject": "Cannot access email",
+      "status": 2,
+      "priority": 1,
+      "created_at": "2024-01-01T10:00:00Z",
+      "updated_at": "2024-01-02T15:30:00Z",
+      "stats": {
+        "closed_at": "2024-01-03T10:00:00Z",
+        "resolved_at": "2024-01-03T09:30:00Z",
+        "first_responded_at": "2024-01-01T10:15:00Z"
+      },
+      "requester": {
+        "id": 456,
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "phone": "+1-555-9876",
+        "mobile": "+1-555-5432"
+      }
+    }
+  ]
+}
+```
+
+**Databricks Pipeline Configuration:**
+
+The `include` parameter should be configured as a table option in your Databricks pipeline to control which related data is imported during ticket ingestion.
+
+**In `pipeline-spec/ingest.py` or your pipeline configuration:**
+
+```python
+# Example table configuration for tickets
+table_configuration = {
+    "tickets": {
+        "table_options": {
+            "include": "stats,requester,requested_for,onboarding_context,offboarding_context"
+        }
+    }
+}
+```
+
+This allows users to specify which related entities to include when importing tickets, providing flexibility based on their data requirements. The connector implementation will automatically append the `include` parameter to API requests when the `include` option is present in `table_options`.
 
 ### **Pagination**
 
@@ -522,6 +800,36 @@ GET https://YOUR_DOMAIN.freshservice.com/api/v2/releases
 GET https://YOUR_DOMAIN.freshservice.com/api/v2/releases?updated_since=2024-01-01T00:00:00Z&per_page=100
 ```
 
+#### **Changes**
+```bash
+# List all changes
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/changes
+
+# List changes with incremental sync
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/changes?updated_since=2024-01-01T00:00:00Z&per_page=100
+
+# Get specific change
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/changes/123
+```
+
+#### **Agents**
+```bash
+# List all agents
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/agents?per_page=100
+
+# Get specific agent
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/agents/789
+```
+
+#### **Requesters**
+```bash
+# List all requesters
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/requesters?per_page=100
+
+# Get specific requester
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/requesters/456
+```
+
 #### **Locations**
 ```bash
 # List all locations
@@ -561,6 +869,24 @@ GET https://YOUR_DOMAIN.freshservice.com/api/v2/purchase_orders?per_page=100
 GET https://YOUR_DOMAIN.freshservice.com/api/v2/applications?per_page=100
 ```
 
+#### **Asset Types**
+```bash
+# List all asset types
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/asset_types?per_page=100
+
+# Get specific asset type
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/asset_types/601
+```
+
+#### **Service Catalog**
+```bash
+# List all service catalog items
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/service_catalog/items?per_page=100
+
+# Get specific service catalog item
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/service_catalog/items/201
+```
+
 #### **Requested Items**
 ```bash
 # List requested items for a specific service request (ticket)
@@ -571,6 +897,21 @@ GET https://YOUR_DOMAIN.freshservice.com/api/v2/tickets/{ticket_id}/requested_it
 1. First retrieve all tickets with `ticket_type = "Service Request"`
 2. For each service request ticket, call the requested_items endpoint
 3. Combine results from all service requests
+
+#### **Conversations**
+```bash
+# List all conversations for a specific ticket
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/tickets/{ticket_id}/conversations?per_page=100
+
+# Get specific conversation
+GET https://YOUR_DOMAIN.freshservice.com/api/v2/tickets/{ticket_id}/conversations/9001
+```
+
+**Note for Conversations:** This object requires a parent `ticket_id` parameter. To retrieve all conversations across all tickets, you must:
+1. First retrieve all tickets
+2. For each ticket, call the conversations endpoint
+3. Combine results from all tickets
+4. Add the `ticket_id` field to each conversation record for reference
 
 ### **Rate Limits**
 
@@ -780,6 +1121,11 @@ curl -u YOUR_API_KEY:X \
 | Official API Docs | https://developers.freshworks.com/api-sdk/freshservice/tickets.html | 2024-12-19 | High | Ticket schema, pagination, incremental sync with updated_since |
 | Integration Docs (Skyvia) | https://docs.skyvia.com/connectors/cloud-sources/freshservice_connections.html | 2024-12-19 | Medium | Object list confirmation, endpoint paths |
 | Integration Docs (CData) | https://cdn.cdata.com/help/FAJ/api/freshservice/pg_alltablesapi.htm | 2024-12-19 | Medium | Complete object list, table descriptions |
+| Official API Docs | https://developers.freshworks.com/api-sdk/freshservice/tickets.html | 2024-12-30 | High | Tickets include parameter, stats, requester, requested_for fields |
+| Freshservice Support | https://support.freshservice.com/support/solutions/articles/233753 | 2024-12-30 | High | Asset types management, configuration |
+| Freshservice Support | https://msp.support.freshservice.com/support/solutions/articles/50000011683 | 2024-12-30 | High | Service catalog configuration, structure |
+| Developer Docs (Knit) | https://developers.getknit.dev/docs/freshservice-usecases | 2024-12-30 | Medium | Agents API usage, conversations API structure |
+| Freshservice Support | https://support.freshservice.com/support/solutions/articles/154762 | 2024-12-30 | High | Requesters management, fields |
 
 ## **Sources and References**
 
@@ -796,14 +1142,34 @@ curl -u YOUR_API_KEY:X \
 3. **Freshworks API SDK Documentation - Tickets**
    - URL: https://developers.freshworks.com/api-sdk/freshservice/tickets.html
    - Confidence: High (Official SDK documentation)
-   - Used for: Ticket schema details, pagination mechanics, incremental sync patterns
+   - Used for: Ticket schema details, pagination mechanics, incremental sync patterns, include parameter usage
 
-4. **Skyvia Freshservice Integration Documentation**
+4. **Freshservice Support - Asset Management**
+   - URL: https://support.freshservice.com/support/solutions/articles/233753
+   - Confidence: High (Official support documentation)
+   - Used for: Asset types management, configuration, structure
+
+5. **Freshservice MSP Support - Service Catalog**
+   - URL: https://msp.support.freshservice.com/support/solutions/articles/50000011683
+   - Confidence: High (Official support documentation)
+   - Used for: Service catalog configuration, item structure, visibility rules
+
+6. **Freshservice Support - Managing Requesters**
+   - URL: https://support.freshservice.com/support/solutions/articles/154762
+   - Confidence: High (Official support documentation)
+   - Used for: Requesters management, field definitions, user attributes
+
+7. **Knit Developer Documentation - Freshservice Use Cases**
+   - URL: https://developers.getknit.dev/docs/freshservice-usecases
+   - Confidence: Medium (Third-party integration documentation)
+   - Used for: Agents API usage examples, conversations API structure validation
+
+8. **Skyvia Freshservice Integration Documentation**
    - URL: https://docs.skyvia.com/connectors/cloud-sources/freshservice_connections.html
    - Confidence: Medium (Third-party integration platform)
    - Used for: Cross-reference of object list, endpoint validation
 
-5. **CData Freshservice API Tables Reference**
+9. **CData Freshservice API Tables Reference**
    - URL: https://cdn.cdata.com/help/FAJ/api/freshservice/pg_alltablesapi.htm
    - Confidence: Medium (Third-party data connectivity platform)
    - Used for: Complete object list validation, field descriptions
@@ -812,9 +1178,12 @@ curl -u YOUR_API_KEY:X \
 - All information prioritized official Freshservice documentation over third-party sources
 - Where multiple official sources existed, the most recent API v2 documentation was used
 - No significant conflicts were found between sources
+- Include parameter usage confirmed across multiple sources (official Freshworks docs and implementation examples)
 
 **Known Gaps:**
 - Detailed custom field schemas are instance-specific and cannot be statically defined
 - Some advanced features like webhooks and app-specific endpoints were not included as they are not relevant for basic data connector implementation
 - The exact behavior of workspace_id field in multi-workspace accounts may vary
+- Service catalog item custom fields and child fields vary by configuration and are stored as JSON strings
+- Conversation attachments structure may vary based on attachment type
 
