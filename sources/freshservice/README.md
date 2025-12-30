@@ -122,28 +122,46 @@ Table-specific options are passed via the **pipeline specification** under `tabl
 - `per_page` (integer, optional): Number of records to fetch per page. Default: `100`. Maximum: `100`.
 - `max_pages_per_batch` (integer, optional): Maximum number of pages to fetch in a single read operation. Default: `50`. This helps control memory usage and runtime.
 
-**Additional options for incremental tables** (`tickets`, `problems`, `releases`):
+**Additional options for incremental tables** (`tickets`, `problems`, `changes`, `releases`):
 - `start_date` (ISO 8601 string, optional): Initial starting point for incremental sync when there is no stored offset yet. Format: `YYYY-MM-DDTHH:MM:SSZ` (e.g., `2025-12-01T00:00:00Z`).
 - `lookback_seconds` (integer, optional): Lookback window in seconds when computing the next cursor to handle late-arriving updates. Default: `300` (5 minutes).
 
+**Tickets-specific options:**
+- `include` (string, optional): Comma-separated list of related data to include in ticket responses. This enhances ticket data by including additional fields in a single API call. Supported values:
+  - `stats` - Includes ticket statistics (`closed_at`, `resolved_at`, `first_responded_at`)
+  - `requester` - Includes requester details (email, name, phone, mobile)
+  - `requested_for` - Includes details about the user for whom the ticket was requested
+  - `onboarding_context` - Includes onboarding-related information
+  - `offboarding_context` - Includes offboarding-related information
+  - Example: `"include": "stats,requester,requested_for"`
+
 **Special notes:**
 - **`requested_items`**: This is a nested resource under service request tickets. The connector automatically fetches all service request tickets first, then retrieves requested items for each service request. No additional configuration is needed beyond the common options.
+- **`conversations`**: This is a nested resource under tickets. The connector automatically fetches all tickets first, then retrieves conversations for each ticket. No additional configuration is needed beyond the common options.
 
 ### Schema Highlights
 
 Full schemas are defined by the connector and align with the Freshservice API v2 documentation:
 
-- **`tickets`**: Includes fields such as `subject`, `description`, `priority`, `status`, `requester_id`, `responder_id`, `created_at`, `updated_at`, and arrays like `cc_emails`, `tags`. Also includes `custom_fields` stored as a JSON string for instance-specific custom data.
+- **`tickets`**: Includes fields such as `subject`, `description`, `priority`, `status`, `requester_id`, `responder_id`, `created_at`, `updated_at`, and arrays like `cc_emails`, `tags`. Also includes `custom_fields` stored as a JSON string for instance-specific custom data. When using the `include` parameter, additional fields like `stats` and `requester` are added to the response.
 
-- **`problems`** and **`releases`**: Similar structure with IT service management specific fields like `impact`, `risk`, `planned_start_date`, `planned_end_date`, and planning/analysis fields stored as JSON strings.
+- **`problems`**, **`changes`**, and **`releases`**: Similar structure with IT service management specific fields like `impact`, `risk`, `planned_start_date`, `planned_end_date`, and planning/analysis fields stored as JSON strings.
+
+- **`agents`** and **`requesters`**: Include user information such as names, email addresses, phone numbers, department associations, and `custom_fields` stored as JSON strings.
 
 - **`locations`** and **`vendors`**: Include structured address information stored as nested objects with fields like `line1`, `line2`, `city`, `state`, `country`, `zipcode`.
 
 - **`assets`**: Include asset tracking information such as `asset_tag`, `asset_state`, `usage_type`, along with `type_fields` stored as a JSON string containing asset-type-specific attributes.
 
+- **`asset_types`**: Include type definitions with fields like `name`, `description`, and hierarchical relationships via `parent_asset_type_id`.
+
 - **`purchase_orders`**: Include vendor details, billing/shipping addresses, line items in the `purchase_items` field (stored as JSON string), and financial fields with decimal precision.
 
-- **`requested_items`**: Include service catalog item details like `service_item_id`, `quantity`, `stage`, `cost_per_request`, and fulfillment information.
+- **`service_catalog`**: Include catalog item details such as `name`, `delivery_time`, `visibility`, `item_type`, and configuration options.
+
+- **`requested_items`**: Include service catalog item details like `service_item_id`, `quantity`, `stage`, `cost_per_request`, and fulfillment information. Each record includes a `ticket_id` reference to the parent service request.
+
+- **`conversations`**: Include conversation details such as `body`, `body_text`, `incoming`, `private`, `user_id`, and email information. Each record includes a `ticket_id` reference to the parent ticket.
 
 You usually do not need to customize the schema; it is static and driven by the connector implementation. Well-defined nested objects (like `address`) are preserved as structured types, while dynamic/custom fields are stored as JSON strings to ensure compatibility with Spark/Databricks.
 
@@ -222,7 +240,7 @@ Example `pipeline_spec` for ingesting Freshservice tables:
 pipeline_spec = {
     "connection_name": "freshservice-new",
     "objects": [
-        # Full config: customize destination and behavior
+        # Tickets with include parameter for enhanced data
         {
             "table": {
                 "source_table": "tickets",
@@ -232,25 +250,51 @@ pipeline_spec = {
                 "table_configuration": {
                     "scd_type": "APPEND_ONLY",
                     "start_date": "2025-12-01T00:00:00Z",
-                    "per_page": 10,
+                    "per_page": 100,
                     "max_pages_per_batch": 50,
-                    "lookback_seconds": 300
+                    "lookback_seconds": 300,
+                    "include": "stats,requester,requested_for"
                 },
             }
         },
-        # Minimal config: use defaults for everything
+        # Changes - new CDC table
         {
             "table": {
-                "source_table": "problems",
+                "source_table": "changes",
                 "destination_catalog": "fabio_goncalves",
                 "destination_schema": "lakeflow",
-                "destination_table": "freshservice_problems",
+                "destination_table": "freshservice_changes",
                 "table_configuration": {
                     "start_date": "2025-12-01T00:00:00Z"
                 },
             }
         },
-        # Snapshot table example
+        # Agents - user management
+        {
+            "table": {
+                "source_table": "agents",
+                "destination_catalog": "fabio_goncalves",
+                "destination_schema": "lakeflow",
+                "destination_table": "freshservice_agents",
+                "table_configuration": {
+                    "per_page": 100
+                },
+            }
+        },
+        # Conversations - ticket discussions
+        {
+            "table": {
+                "source_table": "conversations",
+                "destination_catalog": "fabio_goncalves",
+                "destination_schema": "lakeflow",
+                "destination_table": "freshservice_conversations",
+                "table_configuration": {
+                    "per_page": 100,
+                    "max_pages_per_batch": 20
+                },
+            }
+        },
+        # Assets - snapshot table
         {
             "table": {
                 "source_table": "assets",
@@ -270,34 +314,45 @@ pipeline_spec = {
 - `connection_name` must point to the Unity Catalog connection configured with your Freshservice `api_key`, `domain`, and `externalOptionsAllowList`.
 - For each `table`:
   - `source_table` must be one of the supported table names listed above (exact casing required).
-  - `table_configuration` contains the table-specific options like `per_page`, `start_date`, etc.
-  - For incremental tables (`tickets`, `problems`, `releases`), you can specify `start_date`, `lookback_seconds`, etc.
+  - `table_configuration` contains the table-specific options like `per_page`, `start_date`, `include`, etc.
+  - For incremental tables (`tickets`, `problems`, `changes`, `releases`), you can specify `start_date`, `lookback_seconds`, etc.
+  - For the `tickets` table, you can use the `include` parameter to retrieve additional related data like `stats`, `requester`, and more.
   - For snapshot tables, you typically only need `per_page` and `max_pages_per_batch`.
+  - For nested resources (`requested_items`, `conversations`), the connector automatically handles fetching parent records.
 
 ### Step 3: Run and Schedule the Pipeline
 
 Run the pipeline using your standard Lakeflow / Databricks orchestration (e.g., a scheduled job or workflow).
 
-For incremental tables (`tickets`, `problems`, `releases`):
+For incremental tables (`tickets`, `problems`, `changes`, `releases`):
 - On the **first run**:
   - Omit `start_date` to backfill all historical data (may be heavy for large datasets), or
   - Set `start_date` to a recent cutoff to limit the initial history.
 - On **subsequent runs**, the connector uses the stored cursor (based on `updated_at`) plus the lookback window to safely pick up any late-arriving updates.
+- For `tickets`, consider using the `include` parameter to enrich data with statistics and requester information in a single API call.
 
 For snapshot tables:
 - All records are fetched on each run. No cursor or incremental sync is used.
+- For nested resources (`requested_items`, `conversations`), the connector automatically fetches all parent records and their children.
 
 #### Best Practices
 
-- **Start Small**: Begin by syncing a subset of tables (e.g., `tickets` and `assets`) to validate your configuration and understand the data structure.
-- **Use Incremental Sync**: For tables that support it (`tickets`, `problems`, `releases`), leverage incremental sync to reduce API calls and improve performance.
+- **Start Small**: Begin by syncing a subset of tables (e.g., `tickets`, `agents`, and `assets`) to validate your configuration and understand the data structure.
+- **Use Incremental Sync**: For tables that support it (`tickets`, `problems`, `changes`, `releases`), leverage incremental sync to reduce API calls and improve performance.
+- **Use the Include Parameter for Tickets**: When syncing `tickets`, consider using the `include` parameter to fetch related data (like `stats` and `requester`) in a single API call, reducing the need for additional lookups.
 - **Configure Appropriate Page Sizes**: Use `per_page=100` (the maximum) for optimal performance. Adjust `max_pages_per_batch` based on your runtime requirements and memory constraints.
-- **Set Appropriate Schedules**: Balance data freshness requirements with API rate limits. For example, sync incremental tables every hour and snapshot tables daily or weekly.
+- **Set Appropriate Schedules**: Balance data freshness requirements with API rate limits. For example:
+  - Sync incremental tables (`tickets`, `problems`, `changes`, `releases`) every hour or more frequently.
+  - Sync user/configuration tables (`agents`, `requesters`, `asset_types`, `service_catalog`) daily.
+  - Sync asset/inventory tables (`assets`, `products`, `vendors`, `locations`) daily or weekly.
+  - Sync nested resources (`conversations`) based on your needs, as they can generate many API calls.
 - **Monitor Rate Limits**: Freshservice enforces a rate limit of **1000 requests per hour per API key**. Monitor the `X-RateLimit-*` response headers to track usage. If you hit rate limits, consider:
   - Increasing the sync interval.
   - Reducing the number of tables synced concurrently.
   - Using larger page sizes (`per_page=100`) to reduce the number of requests.
+  - For nested resources (`conversations`, `requested_items`), adjust `max_pages_per_batch` to limit parent records fetched.
 - **Handle Soft Deletes**: For incremental tables, the connector automatically surfaces deleted records (where `deleted=true`). Ensure your downstream processing handles these appropriately.
+- **Plan for Nested Resources**: The `conversations` and `requested_items` tables fetch data by iterating through parent tickets. This can result in many API calls. Consider limiting the number of parent tickets processed per batch using `max_pages_per_batch`.
 
 #### Troubleshooting
 
@@ -322,6 +377,17 @@ For snapshot tables:
   - If you have no service request tickets, the `requested_items` table will be empty.
   - Verify that your Freshservice instance has service catalog items being requested.
 
+- **Missing data for `conversations`**:
+  - `conversations` are nested under tickets.
+  - If your tickets have no notes, replies, or comments, the `conversations` table will be empty or have very few records.
+  - This is normal for tickets that haven't had any discussion or updates.
+
+- **Include parameter not working for tickets**:
+  - Verify that `include` is listed in `externalOptionsAllowList` in your Unity Catalog connection.
+  - Ensure the `include` parameter is specified in `table_configuration` for the tickets table, not in the connection parameters.
+  - Check that you're using valid include values: `stats`, `requester`, `requested_for`, `onboarding_context`, `offboarding_context`.
+  - The API response may not include these fields if they're not available for certain tickets.
+
 - **Schema mismatches downstream**:
   - The connector preserves well-defined nested structures (like `address`) as structs.
   - Dynamic fields (`custom_fields`, `planning_fields`, etc.) are stored as JSON strings.
@@ -342,16 +408,22 @@ For snapshot tables:
 
 - Connector implementation: `sources/freshservice/freshservice.py`
 - Connector API documentation and schemas: `sources/freshservice/freshservice_api_doc.md`
+- Test results: `sources/freshservice/TEST_RESULTS.md`
 - Official Freshservice API Documentation:
   - API Overview: https://api.freshservice.com/
   - Developer Portal: https://developers.freshservice.com/
-  - Tickets API: https://api.freshservice.com/#tickets
+  - Tickets API (with include parameter): https://developers.freshworks.com/api-sdk/freshservice/tickets.html
   - Problems API: https://api.freshservice.com/#problems
+  - Changes API: https://api.freshservice.com/#changes
   - Releases API: https://api.freshservice.com/#releases
+  - Agents API: https://api.freshservice.com/#agents
+  - Requesters API: https://api.freshservice.com/#requesters
   - Assets API: https://api.freshservice.com/#assets
+  - Asset Types API: https://api.freshservice.com/#asset_types
   - Products API: https://api.freshservice.com/#products
   - Vendors API: https://api.freshservice.com/#vendors
   - Locations API: https://api.freshservice.com/#locations
   - Purchase Orders API: https://api.freshservice.com/#purchase_orders
   - Software API: https://api.freshservice.com/#applications
+  - Service Catalog API: https://api.freshservice.com/#service_catalog
 
