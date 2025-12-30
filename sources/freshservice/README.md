@@ -24,7 +24,7 @@ The following parameters must be configured in your Unity Catalog connection:
 |-----------|--------|----------|---------------------------------------------------------------------------------------------|------------------------------------|
 | `api_key` | string | yes      | Freshservice API Key for authentication.                                                    | `your_api_key_here`                |
 | `domain`  | string | yes      | Freshservice subdomain (without `.freshservice.com`).                                       | `yourcompany`                      |
-| `externalOptionsAllowList` | string | yes | Comma-separated list of table-specific option names that are allowed to be passed from the pipeline spec to the connector. **This must be added to your UC connection.** | `per_page,max_pages_per_batch,lookback_seconds,start_date` |
+| `externalOptionsAllowList` | string | yes | Comma-separated list of table-specific option names that are allowed to be passed from the pipeline spec to the connector. **This must be added to your UC connection.** | `per_page,max_pages_per_batch,lookback_seconds,start_date,include` |
 
 > **Important**: The `externalOptionsAllowList` parameter **must be set in your Unity Catalog connection** to allow table-specific options to be passed through from your pipeline specification.
 
@@ -58,7 +58,7 @@ A Unity Catalog connection for this connector can be created via the UI:
 
 1. Follow the **Lakeflow Community Connector** UI flow from the **Add Data** page.
 2. Provide your `api_key` and `domain` as connection parameters.
-3. **Important**: Set `externalOptionsAllowList` to `per_page,max_pages_per_batch,lookback_seconds,start_date` in your Unity Catalog connection. This is **required** for the connector to accept table-specific configuration from your pipeline specification.
+3. **Important**: Set `externalOptionsAllowList` to `per_page,max_pages_per_batch,lookback_seconds,start_date,include` in your Unity Catalog connection. This is **required** for the connector to accept table-specific configuration from your pipeline specification.
 
 The connection can also be created using the standard Unity Catalog API.
 
@@ -70,14 +70,20 @@ The Freshservice connector exposes a **static list** of tables covering IT servi
 
 - `tickets` - Support tickets and service requests
 - `problems` - Problem records for root cause analysis
+- `changes` - Change management records
 - `releases` - Release management records
+- `agents` - Support agents and their information
+- `requesters` - End users and requesters
 - `locations` - Physical or virtual locations
 - `products` - Product catalog items
 - `vendors` - Vendor information
 - `assets` - Hardware and software assets
+- `asset_types` - Asset type definitions and configurations
 - `purchase_orders` - Purchase orders for assets
 - `software` - Software application records
-- `requested_items` - Service catalog requested items
+- `service_catalog` - Service catalog items available for requests
+- `requested_items` - Service catalog items requested in service request tickets
+- `conversations` - Ticket conversations, notes, and replies
 
 ### Object Summary, Primary Keys, and Ingestion Mode
 
@@ -87,14 +93,20 @@ The connector defines the ingestion mode and primary key for each table:
 |---------------------------------|--------------------------------------------------------------|----------------|-------------------|-----------------------------|
 | `tickets`                       | Support tickets and incidents                                | `cdc`          | `id`              | `updated_at`                |
 | `problems`                      | Problem records for root cause analysis                      | `cdc`          | `id`              | `updated_at`                |
+| `changes`                       | Change management records                                    | `cdc`          | `id`              | `updated_at`                |
 | `releases`                      | Release management records                                   | `cdc`          | `id`              | `updated_at`                |
+| `agents`                        | Support agents and their information                         | `snapshot`     | `id`              | n/a                         |
+| `requesters`                    | End users and requesters                                     | `snapshot`     | `id`              | n/a                         |
 | `locations`                     | Physical or virtual locations                                | `snapshot`     | `id`              | n/a                         |
 | `products`                      | Product catalog                                              | `snapshot`     | `id`              | n/a                         |
 | `vendors`                       | Vendor information                                           | `snapshot`     | `id`              | n/a                         |
 | `assets`                        | Hardware and software asset inventory                        | `snapshot`     | `id`              | n/a                         |
+| `asset_types`                   | Asset type definitions                                       | `snapshot`     | `id`              | n/a                         |
 | `purchase_orders`               | Purchase orders                                              | `snapshot`     | `id`              | n/a                         |
 | `software`                      | Software applications                                        | `snapshot`     | `id`              | n/a                         |
+| `service_catalog`               | Service catalog items available for requests                 | `snapshot`     | `id`              | n/a                         |
 | `requested_items`               | Service catalog items requested in service request tickets   | `snapshot`     | `id`, `ticket_id` | n/a                         |
+| `conversations`                 | Ticket conversations, notes, and replies                     | `snapshot`     | `id`, `ticket_id` | n/a                         |
 
 **Ingestion Type Definitions:**
 - **`cdc` (Change Data Capture)**: Supports incremental reads using the `updated_at` timestamp. The connector tracks which records have been updated since the last sync. These tables support soft deletes (deleted records have `deleted=true`).
